@@ -2,26 +2,33 @@ from transformers import pipeline
 import torch
 import os
 
-# 使用国内镜像加速（可选）
+try:
+    from app.logger import get_logger
+except ImportError:
+    try:
+        from .logger import get_logger
+    except ImportError:
+        from logger import get_logger
+
+logger = get_logger("detector")
+
 os.environ['HF_ENDPOINT'] = 'https://hf-mirror.com'
 
-# Load model lazily
 _detector = None
 
 def get_detector():
     global _detector
-    # 支持通过环境变量禁用 AI 检测模型加载（防止内存不足或网络导致 Pending）
     if os.getenv("DISABLE_AI_DETECTION") == "true":
+        logger.info("AI detection disabled via environment variable")
         return None
 
     if _detector is None:
-        # 使用更小、更快的模型
         try:
             model_name = "distilbert-base-uncased"
             _detector = pipeline("text-classification", model=model_name)
-            print(f"✅ AI 检测模型加载成功: {model_name}")
+            logger.info(f"AI detection model loaded successfully: {model_name}")
         except Exception as e:
-            print(f"⚠️ 模型加载失败，使用备用方案: {e}")
+            logger.warning(f"Model loading failed, using fallback: {e}", exc_info=True)
             _detector = None
     return _detector
 
@@ -56,7 +63,7 @@ def detect_ai_content(text: str):
                 "ai_score": ai_score
             })
         except Exception as e:
-            print(f"检测出错: {e}")
+            logger.error(f"Detection error on chunk: {e}", exc_info=True)
             results.append({
                 "text": chunk,
                 "ai_score": 0.5

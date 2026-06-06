@@ -7,19 +7,24 @@ try:
     from app.matcher import AhoCorasickMatcher, TrieMatcher
     from app.case_preserver import CasePreserver
     from app.transform_rules import TransformEngine
+    from app.logger import get_logger
 except ImportError:
     try:
         from .dictionary_loader import DictionaryLoader, Dictionary
         from .matcher import AhoCorasickMatcher, TrieMatcher
         from .case_preserver import CasePreserver
         from .transform_rules import TransformEngine
+        from .logger import get_logger
     except ImportError:
         from dictionary_loader import DictionaryLoader, Dictionary
         from matcher import AhoCorasickMatcher, TrieMatcher
         from case_preserver import CasePreserver
         from transform_rules import TransformEngine
+        from logger import get_logger
 
 load_dotenv()
+
+logger = get_logger("rewriter")
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 MODEL_NAME = os.getenv("MODEL_NAME", "llama-3.3-70b-versatile")
@@ -104,7 +109,7 @@ def _simulated_rewrite(text: str) -> str:
 
 def rewrite_text(text: str, level: str = "medium"):
     if not GROQ_API_KEY:
-        print("WARNING: GROQ_API_KEY not configured, using fallback (simulated rewrite)")
+        logger.warning("GROQ_API_KEY not configured, using fallback (simulated rewrite)")
         return _simulated_rewrite(text)
 
     prompts = {
@@ -145,18 +150,21 @@ def rewrite_text(text: str, level: str = "medium"):
     }
 
     try:
-        print(f"Calling Groq API with model: {MODEL_NAME}")
+        logger.info(f"Calling Groq API with model: {MODEL_NAME}", extra={"extra_data": {"level": level, "text_length": len(text)}})
         response = requests.post("https://api.groq.com/openai/v1/chat/completions", headers=headers, json=payload, timeout=20)
 
         if response.status_code != 200:
-            print(f"Groq API error ({response.status_code}), switching to fallback")
+            logger.warning(
+                f"Groq API error ({response.status_code}), switching to fallback",
+                extra={"extra_data": {"status_code": response.status_code, "response_text": response.text[:500]}},
+            )
             return _simulated_rewrite(text)
 
         result = response.json()
         rewritten = result['choices'][0]['message']['content'].strip()
-        print("Groq API rewrite succeeded")
+        logger.info("Groq API rewrite succeeded", extra={"extra_data": {"rewritten_length": len(rewritten)}})
         return rewritten
 
     except Exception as e:
-        print(f"Groq API call failed: {str(e)}, switching to fallback")
+        logger.error(f"Groq API call failed: {str(e)}, switching to fallback", exc_info=True)
         return _simulated_rewrite(text)
