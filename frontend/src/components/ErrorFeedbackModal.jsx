@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import { X, AlertTriangle, Send, CheckCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clientLogger from '../services/logger';
@@ -138,3 +139,20 @@ export default function ErrorFeedbackModal({ errorInfo, onClose, appStateSnapsho
     </AnimatePresence>
   );
 }
+
+ErrorFeedbackModal.propTypes = {
+  errorInfo: PropTypes.shape({
+    type: PropTypes.string,
+    message: PropTypes.string,
+    stack: PropTypes.string,
+    component_stack: PropTypes.string,
+  }),
+  onClose: PropTypes.func,
+  appStateSnapshot: PropTypes.object,
+};
+
+ErrorFeedbackModal.defaultProps = {
+  errorInfo: null,
+  onClose: undefined,
+  appStateSnapshot: null,
+};

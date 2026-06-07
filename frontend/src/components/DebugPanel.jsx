@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import PropTypes from 'prop-types';
 import { X, Activity, Zap, Clock, Database, Server, Gauge } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getApiLogs } from '../services/api';
@@ -306,3 +307,11 @@ function ScorePill({ label, value, type, good, warn }) {
     </div>
   );
 }
+
+DebugPanel.propTypes = {
+  appState: PropTypes.object,
+};
+
+DebugPanel.defaultProps = {
+  appState: {},
+};

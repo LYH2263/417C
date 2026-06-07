@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import clientLogger from '../services/logger';
 
 class ErrorBoundary extends React.Component {
@@ -58,12 +59,14 @@ class ErrorBoundary extends React.Component {
           <p className="text-sm text-slate-400 mb-4">
             组件渲染时发生错误，已为您捕获。
           </p>
-          <button
-            onClick={this.handleReset}
-            className="px-4 py-2 bg-red-700 hover:bg-red-600 text-white rounded-lg text-sm"
-          >
-            重试
-          </button>
+          {this.props.showReset !== false && (
+            <button
+              onClick={this.handleReset}
+              className="px-4 py-2 bg-red-700 hover:bg-red-600 text-white rounded-lg text-sm"
+            >
+              重试
+            </button>
+          )}
         </div>
       );
     }
@@ -71,5 +74,17 @@ class ErrorBoundary extends React.Component {
     return this.props.children;
   }
 }
+
+ErrorBoundary.propTypes = {
+  children: PropTypes.node,
+  fallback: PropTypes.oneOfType([PropTypes.node, PropTypes.func]),
+  showReset: PropTypes.bool,
+};
+
+ErrorBoundary.defaultProps = {
+  children: null,
+  fallback: null,
+  showReset: true,
+};
 
 export default ErrorBoundary;
